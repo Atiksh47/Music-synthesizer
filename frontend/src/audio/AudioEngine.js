@@ -73,10 +73,11 @@ export class AudioEngine {
         const end = start + note.duration_s;
         const attack = Math.min(0.02, note.duration_s * 0.1);
         const release = Math.min(0.08, note.duration_s * 0.2);
+        const peak = note.gain ?? 1.0;
 
         env.gain.setValueAtTime(0, start);
-        env.gain.linearRampToValueAtTime(1, start + attack);
-        env.gain.setValueAtTime(1, end - release);
+        env.gain.linearRampToValueAtTime(peak, start + attack);
+        env.gain.setValueAtTime(peak, end - release);
         env.gain.linearRampToValueAtTime(0, end);
 
         osc.connect(env);

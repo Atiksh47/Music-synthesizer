@@ -113,7 +113,7 @@ def _count_lines(source: str) -> Tuple[int, int]:
     return loc, comments
 
 
-def analyze(source: str) -> Tuple[CodeMetrics, List[FunctionData]]:
+def analyze(source: str) -> Tuple[CodeMetrics, List[FunctionData], ast.AST]:
     tree = ast.parse(source)
     metrics = CodeMetrics()
 
@@ -141,4 +141,4 @@ def analyze(source: str) -> Tuple[CodeMetrics, List[FunctionData]]:
     metrics.loc = loc
     metrics.comment_lines = comments
 
-    return metrics, functions
+    return metrics, functions, tree

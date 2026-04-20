@@ -21,13 +21,13 @@ def analyze_code():
         return jsonify({"error": f"Input exceeds {MAX_LINES} line limit"}), 400
 
     try:
-        metrics, functions = analyze(source)
+        metrics, _, tree = analyze(source)
     except SyntaxError as e:
         return jsonify({"error": f"Syntax error: {e}"}), 422
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-    return jsonify(map_to_music(metrics, functions))
+    return jsonify(map_to_music(metrics, tree))
 
 
 if __name__ == "__main__":
