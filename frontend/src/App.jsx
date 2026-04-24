@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import CodeEditor from './components/CodeEditor';
 import Visualizer from './components/Visualizer';
+import PianoRoll  from './components/PianoRoll';
 import { AudioEngine } from './audio/AudioEngine';
-import { EXAMPLES } from './data/examples';
+import { VOICE_COLORS } from './data/constants';
 import './App.css';
 
 const engine = new AudioEngine();
@@ -52,7 +53,7 @@ function EmptyState() {
       <div className="empty-icon">♩</div>
       <p className="empty-headline">Your code becomes music</p>
       <p className="empty-sub">
-        Paste Python code in the editor, pick an example, then hit Analyze & Play.
+        Paste Python code in the editor, pick an example, then hit Analyze &amp; Play.
       </p>
       <ul className="mapping-list">
         {MAPPING_RULES.map((r) => (
@@ -69,12 +70,13 @@ function EmptyState() {
 }
 
 export default function App() {
-  const [code, setCode]       = useState('');
-  const [loading, setLoading] = useState(false);
-  const [playing, setPlaying] = useState(false);
-  const [error, setError]     = useState(null);
-  const [result, setResult]   = useState(null);
-  const [dark, setDark]       = useState(() => {
+  const [code, setCode]               = useState('');
+  const [loading, setLoading]         = useState(false);
+  const [playing, setPlaying]         = useState(false);
+  const [error, setError]             = useState(null);
+  const [result, setResult]           = useState(null);
+  const [playStartTime, setPlayStart] = useState(null); // Date.now() when audio begins
+  const [dark, setDark]               = useState(() => {
     const saved = localStorage.getItem('theme');
     if (saved) return saved === 'dark';
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -88,6 +90,7 @@ export default function App() {
   const handleSubmit = async () => {
     setLoading(true);
     setError(null);
+    setPlayStart(null);
     engine.stop();
     setPlaying(false);
 
@@ -101,7 +104,13 @@ export default function App() {
       if (!res.ok) throw new Error(data.error || 'Analysis failed');
 
       setResult(data);
-      analyserRef.current = engine.play(data, () => setPlaying(false));
+      // 50 ms offset matches the AudioEngine's `ctx.currentTime + 0.05` lead-in
+      const t0 = Date.now() + 50;
+      analyserRef.current = engine.play(data, () => {
+        setPlaying(false);
+        setPlayStart(null);
+      });
+      setPlayStart(t0);
       setPlaying(true);
     } catch (e) {
       setError(e.message);
@@ -113,6 +122,7 @@ export default function App() {
   const handleStop = () => {
     engine.stop();
     setPlaying(false);
+    setPlayStart(null);
   };
 
   return (
@@ -135,6 +145,7 @@ export default function App() {
       </header>
 
       <main className="app-main">
+        {/* ── Left pane: editor ─────────────────────────────────── */}
         <div className="pane-left">
           <CodeEditor
             code={code}
@@ -150,6 +161,7 @@ export default function App() {
           )}
         </div>
 
+        {/* ── Right pane: output ────────────────────────────────── */}
         <div className="pane-right">
           {!result ? (
             <EmptyState />
@@ -157,32 +169,53 @@ export default function App() {
             <>
               <MetadataBar data={result.metadata} bpm={result.bpm} />
 
+              {/* Piano roll — always visible once a result exists */}
+              <PianoRoll
+                voices={result.voices}
+                totalDuration={result.total_duration_s}
+                playStartTime={playStartTime}
+                dark={dark}
+              />
+
+              {/* Playback controls */}
               {playing ? (
                 <div className="playback-section">
-                  <p className="now-playing">
-                    <span className="pulse-dot" /> Now playing…
-                  </p>
+                  <div className="playback-row">
+                    <span className="now-playing">
+                      <span className="pulse-dot" /> Now playing…
+                    </span>
+                    <button className="stop-btn" onClick={handleStop}>
+                      ■ Stop
+                    </button>
+                  </div>
                   <Visualizer analyser={analyserRef.current} />
-                  <button className="stop-btn" onClick={handleStop}>
-                    ■ Stop
-                  </button>
                 </div>
               ) : (
                 <div className="playback-section">
                   <p className="replay-hint">
-                    Edit the code or pick a new example and hit Analyze & Play again.
+                    Edit the code or pick a new example and hit Analyze &amp; Play again.
                   </p>
-                  <button className="analyze-btn replay" onClick={handleSubmit} disabled={loading || !code.trim()}>
+                  <button
+                    className="analyze-btn replay"
+                    onClick={handleSubmit}
+                    disabled={loading || !code.trim()}
+                  >
                     ▶ Replay
                   </button>
                 </div>
               )}
 
+              {/* Voice legend */}
               <div className="voice-legend">
-                <p className="legend-title">Voices ({result.voices?.length ?? 0})</p>
+                <p className="legend-title">
+                  Voices ({result.voices?.length ?? 0})
+                </p>
                 {result.voices?.map((v, i) => (
                   <div key={i} className="legend-item">
-                    <span className="legend-dot" style={{ background: VOICE_COLORS[i % VOICE_COLORS.length] }} />
+                    <span
+                      className="legend-dot"
+                      style={{ background: VOICE_COLORS[i % VOICE_COLORS.length] }}
+                    />
                     <span className="legend-wave">{v.waveform}</span>
                     <span className="legend-notes">{v.notes?.length ?? 0} notes</span>
                   </div>
@@ -195,7 +228,3 @@ export default function App() {
     </div>
   );
 }
-
-const VOICE_COLORS = [
-  '#a78bfa', '#38bdf8', '#34d399', '#fb923c', '#f472b6', '#facc15', '#818cf8',
-];
