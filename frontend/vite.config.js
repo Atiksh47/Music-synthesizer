@@ -7,6 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/analyze': 'http://localhost:5000',
+      '/explain': 'http://localhost:5000',
     },
   },
 })

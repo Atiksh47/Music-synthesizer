@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import CodeEditor from './components/CodeEditor';
 import Visualizer from './components/Visualizer';
-import PianoRoll  from './components/PianoRoll';
+import PianoRoll    from './components/PianoRoll';
+import ExplainPanel from './components/ExplainPanel';
 import { AudioEngine } from './audio/AudioEngine';
 import { VOICE_COLORS } from './data/constants';
 import './App.css';
@@ -204,6 +205,9 @@ export default function App() {
                   </button>
                 </div>
               )}
+
+              {/* AI explanation */}
+              <ExplainPanel code={code} result={result} />
 
               {/* Voice legend */}
               <div className="voice-legend">
