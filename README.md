@@ -80,6 +80,15 @@ Return statements lower pitch, providing consistent phrase resolution.
 
 All notes are quantized to the A minor pentatonic scale to maintain musical coherence.
 
+## Features
+
+- **Real-time Sonification**: Convert Python code to music with deterministic playback
+- **Piano Roll Visualization**: See the musical structure before and during playback
+- **AI-Powered Explanations**: Get concise explanations of how code structure maps to musical elements
+- **Interactive Examples**: Explore curated Python examples showcasing different musical patterns
+- **Dark/Light Mode**: Toggle themes for comfortable coding
+- **Web Audio API**: High-precision scheduling for polyphonic synthesis
+
 ## Example
 
 ```python
@@ -100,17 +109,24 @@ Produces a short sequence where:
 **Backend**
 - Python 3.10+
 - `ast` module for parsing and traversal
-- Flask API
+- Flask API with CORS
+- Ollama integration for AI explanations
 
 **Frontend**
-- React (Vite)
+- React 19 (Vite)
 - Web Audio API
   - precise scheduling via `AudioContext.currentTime`
   - polyphonic synthesis with `OscillatorNode`
   - reverb via `ConvolverNode`
   - real-time visualization via `AnalyserNode`
+- Canvas 2D for piano roll rendering
 
 ## Getting Started
+
+**Prerequisites**
+- Python 3.10+
+- Node.js 18+
+- Ollama (for AI explanations)
 
 **Backend**
 ```bash
@@ -126,6 +142,11 @@ npm install
 npm run dev
 ```
 
+**AI Explanations** (Optional)
+- Install [Ollama](https://ollama.ai/)
+- Pull a model: `ollama pull qwen2.5:0.5b`
+- Update `OLLAMA_MODEL` in `backend/app.py` if needed
+
 ## Architecture
 
 ```
@@ -133,15 +154,21 @@ backend/
   analyzer.py    — Extracts structural metrics (complexity, depth, identifiers)
   traverser.py   — Converts AST traversal into time-ordered event sequences
   mapper.py      — Computes global parameters and orchestrates traversal
-  app.py         — Flask API
+  app.py         — Flask API with /analyze and /explain endpoints
+  test_ollama.py — Ollama integration test
 
 frontend/src/
   audio/
     AudioEngine.js   — Schedules and plays event stream via Web Audio API
   components/
-    CodeEditor.jsx
-    Visualizer.jsx
-  App.jsx
+    CodeEditor.jsx   — Code input with syntax highlighting and examples dropdown
+    PianoRoll.jsx    — Canvas-based piano roll visualization
+    Visualizer.jsx   — Real-time frequency spectrum display
+    ExplainPanel.jsx — AI-generated explanations of musical mappings
+  data/
+    constants.js     — Voice colors and UI constants
+    examples.js      — Curated Python code examples
+  App.jsx            — Main application component
 ```
 
 ## Key Characteristics
@@ -156,7 +183,34 @@ frontend/src/
 ```
 music-synthesizer/
 ├── backend/
+│   ├── analyzer.py
+│   ├── app.py
+│   ├── mapper.py
+│   ├── requirements.txt
+│   ├── test_ollama.py
+│   └── traverser.py
 ├── frontend/
-├── PLAN.md
+│   ├── eslint.config.js
+│   ├── index.html
+│   ├── package.json
+│   ├── vite.config.js
+│   ├── public/
+│   └── src/
+│       ├── App.css
+│       ├── App.jsx
+│       ├── index.css
+│       ├── main.jsx
+│       ├── assets/
+│       ├── audio/
+│       │   └── AudioEngine.js
+│       ├── components/
+│       │   ├── CodeEditor.jsx
+│       │   ├── ExplainPanel.jsx
+│       │   ├── PianoRoll.jsx
+│       │   └── Visualizer.jsx
+│       └── data/
+│           ├── constants.js
+│           └── examples.js
+├── plan.md
 └── README.md
 ```
